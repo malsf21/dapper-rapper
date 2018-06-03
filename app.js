@@ -1,10 +1,15 @@
 var lyrics;
-var song;
+var song = [];
 var beat;
+var voices = window.speechSynthesis.getVoices();
+var playing = false;
 
 var available_beats = [
+	"im_upset",
+	"look_alive",
 	"pull_up_and_wreck",
 	"ric_flair_drip",
+	"win",
 	"x"
 ]
 
@@ -22,57 +27,61 @@ for (i = 0; i < available_lyrics.length; i++){
 	document.getElementById('lyrics').innerHTML += "<option id='" + available_lyrics[i] + "'>" + available_lyrics[i] + "</option>"
 }
 
+speechSynthesis.speak(new SpeechSynthesisUtterance("Starting up"))
 
 document.getElementById('start').onclick = function() {
-	speechSynthesis.speak(new SpeechSynthesisUtterance("Starting up"))
-	console.log("Getting " + document.getElementById("lyrics").value)
-	fetch("lyrics/" + document.getElementById("lyrics").value + ".txt")
-		.then(response => response.text())
-		.then((text) => {
-			console.log("Got lyrics!")
-			lyrics = text.split(/\r\n|\n/)
-			console.log("Getting beat " + document.getElementById("beats").value)
-			beat = new Audio("beats/" + document.getElementById("beats").value + ".mp3")
-			console.log("Mapping lyrics")
-			song = lyrics.map(x => new SpeechSynthesisUtterance(x.replace(/ *\([^)]*\) */g, ""))) // drops everyting in (), could be better implemented
-			console.log("setting up beat")
-			beat.currentTime = 0
-			beat.play()
-			speechSynthesis.speak(new SpeechSynthesisUtterance("Check It"))
-			speechSynthesis.speak(new SpeechSynthesisUtterance("If young metro don't trust you i'm gonna shoot you"))
-			setTimeout(function() {
-				for (i = 0; i < lyrics.length; i++) {
+	if (playing == false){
+		playing = true
+		console.log("Getting " + document.getElementById("lyrics").value)
+		fetch("lyrics/" + document.getElementById("lyrics").value + ".txt")
+			.then(response => response.text())
+			.then((text) => {
+				console.log("Got lyrics!")
+				lyrics = text.split(/\r\n|\n/)
+				console.log("Getting beat " + document.getElementById("beats").value)
+				beat = new Audio("beats/" + document.getElementById("beats").value + ".mp3")
+				console.log("Mapping lyrics")
+				for (i = 0; i < lyrics.length; i++){
+					line = lyrics[i].replace(/ *\([^)]*\) */g, "")   // drops everyting in (), could be better implemented
+					if (line.replace(/ /g, '') != ''){
+						console.log(line)
+						var ssu = new SpeechSynthesisUtterance()
+						ssu.voice = voices[Math.floor(Math.random()*voices.length)]; // Note: some voices don't support altering params
+						ssu.voiceURI = 'native';
+						ssu.volume = 1; // 0 to 1
+						ssu.rate = 1; // 0.1 to 10
+						ssu.pitch = 0.9; //0 to 2
+						ssu.text = line;
+						ssu.lang = 'en-US';
+						song.push(ssu)
+					}
+				}
+				console.log("setting up beat")
+				beat.currentTime = 0
+				beat.play()
+				speechSynthesis.speak(new SpeechSynthesisUtterance("Check It"))
+				speechSynthesis.speak(new SpeechSynthesisUtterance("If young metro don't trust you, i'm gonna shoot you"))
+				for (i = 0; i < song.length; i++) {
 					console.log("adding line" + i + " to speak queue")
 					speechSynthesis.speak(song[i])
 				}
-			}, 10000);
-		})
+			})
+			.catch(function(err) {
+		    console.log('Fetch Error :-S', err);
+		  });
+	}
 }
 
 document.getElementById('stop').onclick = function() {
-	beat.pause()
-	speechSynthesis.pause()
+	if (playing = true){
+		beat.pause()
+		speechSynthesis.cancel()
+	}
 }
 
 window.onbeforeunload = function(){
-	beat.pause()
-	speechSynthesis.pause()
+	if (playing = true){
+		beat.pause()
+		speechSynthesis.cancel()
+	}
 }
-/*
-
-var song = new SpeechSynthesisUtterance();
-var voices = window.speechSynthesis.getVoices();
-song.voice = voices[10]; // Note: some voices don't support altering params
-song.voiceURI = 'native';
-song.volume = 1; // 0 to 1
-song.rate = 1; // 0.1 to 10
-song.pitch = 0.8; //0 to 2
-song.text = "let's go";
-song.lang = 'en-US';
-
-song.onend = function(e) {
-  console.log('Finished in ' + event.elapsedTime + ' seconds.');
-};
-
-speechSynthesis.speak(song);
-*/
