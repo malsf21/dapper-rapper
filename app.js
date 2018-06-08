@@ -16,6 +16,9 @@ var available_beats = [
 var available_lyrics = [
 	"finesse",
 	"icy_grl",
+	"its_everyday_bro",
+	"mans_not_hot",
+	"rap_god",
 	"rolex"
 ]
 
